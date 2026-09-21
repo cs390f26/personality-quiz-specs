@@ -1,13 +1,9 @@
--- Sample data for the personality quiz MySQL database.
--- The production quiz contains 30 questions.
--- These records are representative development and testing data.
-
 -- -----------------------------------------------------
 -- personality_types
 -- -----------------------------------------------------
 
 INSERT INTO personality_types
-    (personality_type_ID, personality_type, description)
+    (personality_ID, personality_type, description)
 VALUES
     (1, 'Orange', 'Energetic, spontaneous, and action-oriented'),
     (2, 'Gold', 'Organized, dependable, and structured'),
@@ -34,7 +30,7 @@ VALUES
 -- -----------------------------------------------------
 
 INSERT INTO answers
-    (answer_ID, question_ID, answer_text, personality_type_ID)
+    (answer_ID, question_ID, answer_text, personality_ID)
 VALUES
     (1, 1, 'Trying something exciting and spontaneous', 1),
     (2, 1, 'Planning and completing an organized project', 2),
@@ -67,10 +63,10 @@ VALUES
 -- -----------------------------------------------------
 
 INSERT INTO quiz_results
-    (results_ID, personality_type_ID, completed_date, person_ID)
+    (results_ID, personality_ID, person_name, completed_date)
 VALUES
-    (1, 3, '2026-09-14', 1001),
-    (2, 2, '2026-09-15', 1002),
-    (3, 4, '2026-09-16', 1003),
-    (4, 1, '2026-09-17', 1004),
-    (5, 3, '2026-09-18', 1005);
+    (1, 3, 'Jenny', '2026-09-14'),
+    (2, 2, 'Nora', '2026-09-15'),
+    (3, 4, 'Ronnie', '2026-09-16'),
+    (4, 1, 'Coleman', '2026-09-17'),
+    (5, 3, 'Jeff', '2026-09-18');
