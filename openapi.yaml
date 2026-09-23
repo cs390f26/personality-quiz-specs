@@ -3,75 +3,31 @@ openapi: 3.0.3
 info:
   title: Personality Quiz API
   description: |
-    HTTP API for a fixed 30-question True Colors personality quiz.
+    HTTP API for a fixed multiple-choice personality quiz.
 
-    A user enters a name and starts a quiz attempt. The API creates a unique
-    quiz ID for that attempt. The client then displays all 30 questions on one
-    page, with four answer choices per question.
+    The quiz questions and answer choices are predefined and stored in MySQL.
+    Each answer contributes one point toward a personality type. When the quiz
+    is submitted, the API determines the personality type with the highest
+    score, stores the completed result, and returns that result to the client.
 
-    When the user submits the completed quiz, the API validates that every
-    question has exactly one selected answer, totals the points associated with
-    the selected answers, determines the highest-scoring personality category
-    or categories, saves the completed result, and returns the personal result.
-
-    The four personality categories are Blue, Green, Yellow, and Orange. If two
-    or more categories tie for the highest score, all tied categories are
-    returned as the result.
-
-    Only successfully completed quiz attempts are included in cumulative
-    statistics. A tied result contributes one result count to each category
-    that is part of the tie.
+    The API also provides cumulative statistics across all completed quiz
+    attempts.
   version: 1.0.0
 
 paths:
-  /quiz-attempts:
-    post:
-      summary: Start a quiz attempt
-      description: |
-        Starts a new quiz attempt after the user provides a name. The name is
-        used only for this quiz attempt and does not create an account or sign
-        the user in.
-
-        The server creates and returns a unique quiz ID. The client uses this
-        ID when submitting the completed quiz and when requesting the personal
-        results page.
-      operationId: startQuizAttempt
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartQuizRequest'
-            example:
-              personName: Jenny
-      responses:
-        '201':
-          description: Quiz attempt created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StartQuizResponse'
-              example:
-                quizId: q8f3m2k9
-                personName: Jenny
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
   /questions:
     get:
-      summary: Get the personality quiz
+      summary: Get all quiz questions
       description: |
-        Returns all 30 questions in the fixed personality quiz. Each question
-        contains exactly four multiple-choice answers. The client displays all
-        questions together on one page.
+        Returns all questions in the fixed personality quiz along with their
+        answer choices. Questions are returned in question ID order.
 
-        The personality category associated with each answer is intentionally
-        not included in this response. Scoring is performed by the server when
-        the quiz is submitted.
+        The personality type associated with each answer is not included in
+        this response so that scoring details remain on the server.
       operationId: listQuestions
       responses:
         '200':
-          description: All 30 quiz questions and answer choices
+          description: All quiz questions and answer choices
           content:
             application/json:
               schema:
@@ -90,26 +46,50 @@ paths:
                       - answerId: 4
                         answerText: Spending meaningful time with other people
 
-  /quiz-attempts/{quizId}/submit:
+  /questions/{questionId}:
     parameters:
-      - $ref: '#/components/parameters/QuizId'
+      - $ref: '#/components/parameters/QuestionId'
+    get:
+      summary: Get a question
+      description: |
+        Returns one quiz question and its answer choices.
+      operationId: getQuestion
+      responses:
+        '200':
+          description: Question found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+              example:
+                questionId: 1
+                questionText: Which activity sounds most appealing?
+                answers:
+                  - answerId: 1
+                    answerText: Trying something exciting and spontaneous
+                  - answerId: 2
+                    answerText: Planning and completing an organized project
+                  - answerId: 3
+                    answerText: Learning how something complex works
+                  - answerId: 4
+                    answerText: Spending meaningful time with other people
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /quiz-results:
     post:
       summary: Submit a completed quiz
       description: |
-        Submits the selected answers for a quiz attempt.
+        Submits the user's name and selected answer IDs for a completed quiz.
 
-        The request must contain exactly one selected answer for each of the 30
-        quiz questions. If the quiz is incomplete, the result is not saved and
-        the API returns an error so the user can remain on the quiz page and
-        complete the unanswered questions.
+        The server looks up the personality type associated with each selected
+        answer, totals the number of selections for each personality type, and
+        chooses the personality type with the highest total as the final result.
+        The completed result is stored in the quiz_results table.
 
-        For a valid submission, the server looks up the personality category
-        associated with each selected answer and adds one point to that
-        category. The category with the highest total becomes the result.
-
-        If two or more categories share the highest score, the result is a tie
-        and all tied categories are returned. The completed result is saved and
-        becomes part of cumulative statistics.
+        The client should submit exactly one answer for every quiz question.
+        Tie-breaking behavior should be defined by the application before
+        implementation if two or more personality types receive the same score.
       operationId: submitQuiz
       requestBody:
         required: true
@@ -118,6 +98,7 @@ paths:
             schema:
               $ref: '#/components/schemas/SubmitQuizRequest'
             example:
+              personName: Jenny
               selectedAnswers:
                 - questionId: 1
                   answerId: 3
@@ -127,119 +108,85 @@ paths:
                   answerId: 11
                 - questionId: 4
                   answerId: 15
+                - questionId: 5
+                  answerId: 19
       responses:
-        '200':
-          description: Quiz completed, result calculated, and result saved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/QuizResult'
-              examples:
-                oneHighestCategory:
-                  summary: One category has the highest score
-                  value:
-                    quizId: q8f3m2k9
-                    personName: Jenny
-                    isTie: false
-                    personalities:
-                      - personalityId: 2
-                        personalityType: Green
-                        description: Analytical, curious, and independent
-                    completedDate: '2026-09-21'
-                tiedCategories:
-                  summary: Two categories tie for the highest score
-                  value:
-                    quizId: q8f3m2k9
-                    personName: Jenny
-                    isTie: true
-                    personalities:
-                      - personalityId: 1
-                        personalityType: Blue
-                        description: Relationship-focused and supportive
-                      - personalityId: 2
-                        personalityType: Green
-                        description: Analytical, curious, and independent
-                    completedDate: '2026-09-21'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/QuizAttemptNotFound'
-        '409':
-          $ref: '#/components/responses/AlreadyCompleted'
-
-  /quiz-attempts/{quizId}/results:
-    parameters:
-      - $ref: '#/components/parameters/QuizId'
-    get:
-      summary: Get personal quiz results
-      description: |
-        Returns the saved result for a completed quiz attempt. The response
-        includes the user's name, the assigned personality category or tied
-        categories, and the description of each resulting personality type.
-      operationId: getQuizResult
-      responses:
-        '200':
-          description: Personal quiz result found
+        '201':
+          description: Quiz completed and result stored
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuizResult'
               example:
-                quizId: q8f3m2k9
+                resultId: 1
                 personName: Jenny
-                isTie: false
-                personalities:
-                  - personalityId: 2
-                    personalityType: Green
-                    description: Analytical, curious, and independent
-                completedDate: '2026-09-21'
+                personality:
+                  personalityId: 3
+                  personalityType: Green
+                  description: Analytical, curious, and independent
+                completedDate: '2026-09-14'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /quiz-results/{resultId}:
+    parameters:
+      - $ref: '#/components/parameters/ResultId'
+    get:
+      summary: Get a completed quiz result
+      description: |
+        Returns a previously stored quiz result by result ID.
+      operationId: getQuizResult
+      responses:
+        '200':
+          description: Quiz result found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResult'
+              example:
+                resultId: 1
+                personName: Jenny
+                personality:
+                  personalityId: 3
+                  personalityType: Green
+                  description: Analytical, curious, and independent
+                completedDate: '2026-09-14'
         '404':
-          $ref: '#/components/responses/QuizAttemptNotFound'
-        '409':
-          $ref: '#/components/responses/QuizNotCompleted'
+          $ref: '#/components/responses/NotFound'
 
   /statistics:
     get:
       summary: Get cumulative quiz statistics
       description: |
-        Returns cumulative statistics calculated from successfully completed
-        quiz attempts only. Started but unsubmitted attempts are excluded.
-
-        Each personality category includes a result count and the percentage of
-        completed quiz attempts assigned to that category. If a completed quiz
-        has a tie, one result count is added to every personality category that
-        is part of the tie.
-
-        Because a tied attempt can count toward more than one category, the
-        category percentages are each calculated against totalCompleted and may
-        add up to more than 100 percent when ties exist.
+        Returns the total number of completed quizzes and the number of results
+        for each personality type. Statistics are calculated from quiz_results.
       operationId: getStatistics
       responses:
         '200':
-          description: Cumulative statistics for completed quiz attempts
+          description: Cumulative quiz statistics
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatisticsResponse'
               example:
-                totalCompleted: 10
+                totalCompleted: 5
                 personalityTypes:
                   - personalityId: 1
-                    personalityType: Blue
-                    count: 3
-                    percentage: 30.0
-                  - personalityId: 2
-                    personalityType: Green
-                    count: 3
-                    percentage: 30.0
-                  - personalityId: 3
-                    personalityType: Yellow
-                    count: 2
-                    percentage: 20.0
-                  - personalityId: 4
                     personalityType: Orange
-                    count: 3
-                    percentage: 30.0
+                    count: 1
+                    percentage: 20.0
+                  - personalityId: 2
+                    personalityType: Gold
+                    count: 1
+                    percentage: 20.0
+                  - personalityId: 3
+                    personalityType: Green
+                    count: 2
+                    percentage: 40.0
+                  - personalityId: 4
+                    personalityType: Blue
+                    count: 1
+                    percentage: 20.0
 
   /health:
     get:
@@ -268,14 +215,25 @@ paths:
 
 components:
   parameters:
-    QuizId:
-      name: quizId
+    QuestionId:
+      name: questionId
       in: path
       required: true
-      description: Unique identifier for one quiz attempt
+      description: Unique identifier for a quiz question
       schema:
-        $ref: '#/components/schemas/QuizId'
-      example: q8f3m2k9
+        type: integer
+        minimum: 1
+      example: 1
+
+    ResultId:
+      name: resultId
+      in: path
+      required: true
+      description: Unique identifier for a completed quiz result
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
 
   responses:
     BadRequest:
@@ -286,70 +244,36 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
           examples:
             missingName:
-              summary: A name was not supplied
+              summary: Missing user name
               value:
                 error:
                   code: BAD_REQUEST
                   message: personName is required
-            incompleteQuiz:
-              summary: One or more questions are unanswered
+            missingAnswer:
+              summary: Quiz is incomplete
               value:
                 error:
                   code: BAD_REQUEST
-                  message: Every quiz question must have exactly one selected answer
-            duplicateQuestion:
-              summary: More than one selection was submitted for a question
-              value:
-                error:
-                  code: BAD_REQUEST
-                  message: Each question may have only one selected answer
+                  message: One answer must be submitted for every quiz question
             invalidAnswer:
-              summary: An answer does not belong to the supplied question
+              summary: Answer does not belong to the question
               value:
                 error:
                   code: BAD_REQUEST
                   message: The selected answer is not valid for the specified question
 
-    QuizAttemptNotFound:
-      description: The requested quiz attempt does not exist
+    NotFound:
+      description: The requested resource does not exist
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             error:
-              code: QUIZ_ATTEMPT_NOT_FOUND
-              message: Quiz attempt not found
-
-    QuizNotCompleted:
-      description: The quiz attempt exists but has not been successfully submitted
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: QUIZ_NOT_COMPLETED
-              message: Quiz attempt has not been completed
-
-    AlreadyCompleted:
-      description: The quiz attempt was already submitted successfully
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            error:
-              code: QUIZ_ALREADY_COMPLETED
-              message: Quiz attempt has already been completed
+              code: NOT_FOUND
+              message: Requested resource not found
 
   schemas:
-    QuizId:
-      type: string
-      minLength: 1
-      description: Opaque unique identifier for one quiz attempt
-      example: q8f3m2k9
-
     HealthResponse:
       type: object
       required:
@@ -371,9 +295,7 @@ components:
           type: string
           enum:
             - BAD_REQUEST
-            - QUIZ_ATTEMPT_NOT_FOUND
-            - QUIZ_NOT_COMPLETED
-            - QUIZ_ALREADY_COMPLETED
+            - NOT_FOUND
         message:
           type: string
           description: Human-readable explanation of the error
@@ -385,31 +307,6 @@ components:
       properties:
         error:
           $ref: '#/components/schemas/ErrorBody'
-
-    StartQuizRequest:
-      type: object
-      required:
-        - personName
-      properties:
-        personName:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Name entered by the user for the current quiz attempt
-          example: Jenny
-
-    StartQuizResponse:
-      type: object
-      required:
-        - quizId
-        - personName
-      properties:
-        quizId:
-          $ref: '#/components/schemas/QuizId'
-        personName:
-          type: string
-          description: Name associated with this quiz attempt
-          example: Jenny
 
     AnswerChoice:
       type: object
@@ -447,9 +344,8 @@ components:
           example: Which activity sounds most appealing?
         answers:
           type: array
-          minItems: 4
-          maxItems: 4
-          description: The four multiple-choice answers for this question
+          minItems: 2
+          description: Answer choices for this question
           items:
             $ref: '#/components/schemas/AnswerChoice'
 
@@ -460,9 +356,7 @@ components:
       properties:
         questions:
           type: array
-          minItems: 30
-          maxItems: 30
-          description: All 30 questions in the fixed personality quiz
+          description: All questions in the fixed quiz
           items:
             $ref: '#/components/schemas/Question'
 
@@ -486,16 +380,22 @@ components:
     SubmitQuizRequest:
       type: object
       required:
+        - personName
         - selectedAnswers
       properties:
+        personName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name entered by the user before taking the quiz
+          example: Jenny
         selectedAnswers:
           type: array
-          minItems: 30
-          maxItems: 30
+          minItems: 1
           description: |
-            Exactly one selected answer for each of the 30 quiz questions. The
-            server validates that each question appears once and that each
-            selected answer belongs to that question.
+            One selected answer for each quiz question. The server validates
+            that each answer belongs to its supplied question and that the quiz
+            is complete.
           items:
             $ref: '#/components/schemas/SelectedAnswer'
 
@@ -509,55 +409,41 @@ components:
         personalityId:
           type: integer
           minimum: 1
-          description: Unique identifier for the personality category
-          example: 2
+          description: Unique identifier for the personality type
+          example: 3
         personalityType:
           type: string
-          enum:
-            - Blue
-            - Green
-            - Yellow
-            - Orange
-          description: Name of the personality category
+          description: Name of the personality type
           example: Green
         description:
           type: string
-          description: Description displayed for the personality category
+          description: Description of the personality type
           example: Analytical, curious, and independent
 
     QuizResult:
       type: object
       required:
-        - quizId
+        - resultId
         - personName
-        - isTie
-        - personalities
+        - personality
         - completedDate
       properties:
-        quizId:
-          $ref: '#/components/schemas/QuizId'
+        resultId:
+          type: integer
+          minimum: 1
+          description: Unique identifier for the completed quiz result
+          example: 1
         personName:
           type: string
-          description: Name entered for this quiz attempt
+          description: Name entered by the quiz taker
           example: Jenny
-        isTie:
-          type: boolean
-          description: True when two or more personality categories share the highest score
-          example: false
-        personalities:
-          type: array
-          minItems: 1
-          maxItems: 4
-          description: |
-            The highest-scoring personality category. If the highest score is
-            tied, this array contains every category that shares that score.
-          items:
-            $ref: '#/components/schemas/PersonalityType'
+        personality:
+          $ref: '#/components/schemas/PersonalityType'
         completedDate:
           type: string
           format: date
-          description: Date the quiz was successfully submitted
-          example: '2026-09-21'
+          description: Date the quiz was completed
+          example: '2026-09-14'
 
     PersonalityStatistic:
       type: object
@@ -570,31 +456,22 @@ components:
         personalityId:
           type: integer
           minimum: 1
-          example: 2
+          example: 3
         personalityType:
           type: string
-          enum:
-            - Blue
-            - Green
-            - Yellow
-            - Orange
           example: Green
         count:
           type: integer
           minimum: 0
-          description: |
-            Number of completed quiz attempts assigned to this category. A tied
-            attempt contributes one count to every category included in the tie.
-          example: 3
+          description: Number of completed quizzes with this result
+          example: 2
         percentage:
           type: number
           format: float
           minimum: 0
           maximum: 100
-          description: |
-            Percentage of completed quiz attempts assigned to this category,
-            calculated as count divided by totalCompleted times 100.
-          example: 30.0
+          description: Percentage of all completed quizzes with this result
+          example: 40.0
 
     StatisticsResponse:
       type: object
@@ -605,12 +482,10 @@ components:
         totalCompleted:
           type: integer
           minimum: 0
-          description: Total number of successfully completed quiz attempts
-          example: 10
+          description: Total number of completed quiz attempts
+          example: 5
         personalityTypes:
           type: array
-          minItems: 4
-          maxItems: 4
-          description: Cumulative statistics for Blue, Green, Yellow, and Orange
+          description: Cumulative results grouped by personality type
           items:
             $ref: '#/components/schemas/PersonalityStatistic'
