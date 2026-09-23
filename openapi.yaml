@@ -46,35 +46,7 @@ paths:
                       - answerId: 4
                         answerText: Spending meaningful time with other people
 
-  /questions/{questionId}:
-    parameters:
-      - $ref: '#/components/parameters/QuestionId'
-    get:
-      summary: Get a question
-      description: |
-        Returns one quiz question and its answer choices.
-      operationId: getQuestion
-      responses:
-        '200':
-          description: Question found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Question'
-              example:
-                questionId: 1
-                questionText: Which activity sounds most appealing?
-                answers:
-                  - answerId: 1
-                    answerText: Trying something exciting and spontaneous
-                  - answerId: 2
-                    answerText: Planning and completing an organized project
-                  - answerId: 3
-                    answerText: Learning how something complex works
-                  - answerId: 4
-                    answerText: Spending meaningful time with other people
-        '404':
-          $ref: '#/components/responses/NotFound'
+
 
   /quiz-results:
     post:
