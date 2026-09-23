@@ -1,6 +1,6 @@
 # Use cases
 
-This system lets anyone take a fixed 30-question multiple-choice personality quiz based on the True Colors test, and view their personal results and cumulative statistics from all quiz takers' completed quiz attempts afterwards. The same person may take the quiz more than once, since there is no login.
+This system lets anyone take a fixed 10-question multiple-choice personality quiz based on the True Colors test, and view their personal results and cumulative statistics from all quiz takers' completed quiz attempts afterwards. The same person may take the quiz more than once, since there is no login.
 Before beginning the quiz, the user enters a name. When the quiz begins, the system creates a unique quiz ID so that the user's quiz attempt can be tracked between the quiz and results pages. The entire quiz is shown on one page rather than showing one question at a time.
 Each answer corresponds to one personality category and contributes points toward that category. After all questions are answered and the quiz is submitted, the system totals the points for each personality category. The category with the highest score becomes the user's personality result.
 Completed quiz results are also included in cumulative statistics showing how personality results are distributed across all completed quiz attempts.

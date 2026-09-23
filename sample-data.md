@@ -4,7 +4,7 @@ Shared fixture for UI mockups, database testing, and automated tests.
 
 This sample data follows the MySQL database model defined for the personality quiz. It includes representative questions, four answer choices per question, the four True Colors personality types, and several completed quiz results.
 
-The production quiz contains 30 questions. The questions below are sample records used for development and testing rather than the complete final quiz.
+The quiz contains 10 questions. The questions below are sample records used for development and testing rather than the complete final quiz.
 
 **Machine-readable copy:** [`sample-data.sql`](sample-data.sql)  
 Use the SQL file to seed the MySQL database.
@@ -22,7 +22,7 @@ This set covers:
 
 ## Personality types
 
-| personality_ID | personality_type | description |
+| personality_type_ID | personality_type | description |
 |---------------------|------------------|-------------|
 | 1 | Orange | Energetic, spontaneous, and action-oriented |
 | 2 | Gold | Organized, dependable, and structured |
@@ -47,7 +47,7 @@ This set covers:
 
 ### Question 1 — Which activity sounds most appealing?
 
-| answer_ID | question_ID | answer_text | personality_ID |
+| answer_ID | question_ID | answer_text | personality_type_ID |
 |-----------|-------------|-------------|---------------------|
 | 1 | 1 | Trying something exciting and spontaneous | 1 |
 | 2 | 1 | Planning and completing an organized project | 2 |
@@ -56,7 +56,7 @@ This set covers:
 
 ### Question 2 — How do you usually approach a new problem?
 
-| answer_ID | question_ID | answer_text | personality_ID |
+| answer_ID | question_ID | answer_text | personality_type_ID |
 |-----------|-------------|-------------|---------------------|
 | 5 | 2 | Jump in and adjust as I go | 1 |
 | 6 | 2 | Make a clear step-by-step plan | 2 |
@@ -65,7 +65,7 @@ This set covers:
 
 ### Question 3 — What do you value most when working in a group?
 
-| answer_ID | question_ID | answer_text | personality_ID |
+| answer_ID | question_ID | answer_text | personality_type_ID |
 |-----------|-------------|-------------|---------------------|
 | 9 | 3 | Energy and flexibility | 1 |
 | 10 | 3 | Organization and responsibility | 2 |
