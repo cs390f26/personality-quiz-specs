@@ -14,13 +14,23 @@
 
     <main class="results-main">
         <section class="results-card">
-            <h2>Congratulations!</h2>
+            <div class="result-badge">Your Result</div>
 
-            <p>You got:</p>
+            <h2>You are a <span class="result-type color-blue">Blue</span>!</h2>
 
-            <h3 class="personality-result">&lt;personality_type&gt;!</h3>
+            <div class="result-panel">
+                <p class="result-label">Personality Type</p>
+                <h3 class="personality-result color-blue">Blue</h3>
+                <p class="result-description">
+                    You are thoughtful, empathetic, and deeply connected to the people around you.
+                    You value meaningful relationships and are often the person others turn to for support.
+                </p>
+            </div>
 
-            <button type="button" class="stats-button">View Overall Statistics</button>
+            <div class="result-actions">
+                <button type="button" class="stats-button">View Overall Statistics</button>
+                <button type="button" class="secondary-button">Retake Quiz</button>
+            </div>
         </section>
     </main>
 
