@@ -13,18 +13,22 @@
 
     <main>
         <section class="welcome-card">
-            <h2>Welcome!</h2>
+            <h2>True Colors Personality Assessment</h2>
 
             <p>
-                This personality quiz is based on the True Colors test.
-                You will answer 10 multiple-choice questions to learn which
+                This personality quiz is based on the True Colors test, which categorizes personalities into four distinct colors.
+                Each color represents a different personality type. You will answer 10 multiple-choice questions to learn which
                 personality category best matches your responses.
             </p>
 
-            <p>
-                Each answer contributes points toward one of four personality
-                categories: Blue, Green, Gold, or Orange.
+            <p class="personality-colors">
+                <span class="color-blue">Blue</span>
+                <span class="color-green">Green</span>
+                <span class="color-gold">Gold</span>
+                <span class="color-orange">Orange</span>
             </p>
+
+            <img src="../True_Colors_Logo.webp" alt="True Colors logo" class="logo-image" />
 
             <div class="quiz-details">
                 <h3>How it works</h3>
@@ -37,6 +41,30 @@
             </div>
 
             <button class="start-button" type="button">Start Quiz</button>
+        </section>
+
+        <section class="history-card" aria-label="Quiz history reel">
+            <h2>Recent Personalities</h2>
+
+            <div class="history-list">
+                <div class="history-item">
+                    <span class="history-name">Jane Doe</span>
+                    <span class="history-result">got <span class="color-blue">Blue</span>!</span>
+                    <span class="history-date">Sept 28, 2026</span>
+                </div>
+                <div class="history-item">
+                    <span class="history-name">John Smith</span>
+                    <span class="history-result">got <span class="color-gold">Gold</span>!</span>
+                    <span class="history-date">Sept 26, 2026</span>
+                </div>
+                <div class="history-item">
+                    <span class="history-name">Avery Lee</span>
+                    <span class="history-result">got <span class="color-orange">Orange</span>!</span>
+                    <span class="history-date">Sept 21, 2026</span>
+                </div>
+            </div>
+
+            <p class="history-note">This list will be populated from the database once the quiz history feature is connected.</p>
         </section>
     </main>
 
